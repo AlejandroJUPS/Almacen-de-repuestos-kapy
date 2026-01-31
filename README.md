@@ -36,7 +36,7 @@ Después, accede a `login.php`.
 ## Usuario Admin Inicial
 - Usuario: AdminCrhist
 - Contraseña: 820629025
-- Cambia la contraseña después del primer login.
+- Las contraseñas se almacenan con MD5 (no recomendado para producción, pero simple para este proyecto).
 
 ## Acceso
 - Clientes: `index.php` para enviar solicitudes (incluye enlace a login de admin).

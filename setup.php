@@ -60,7 +60,7 @@ try {
 // Insertar usuario admin inicial si no existe
 $result = $conexion->query("SELECT id FROM users WHERE username = 'AdminCrhist'");
 if ($result->num_rows == 0) {
-    $admin_password = password_hash('820629025', PASSWORD_DEFAULT);
+    $admin_password = md5('820629025'); // Usando MD5 en lugar de hash
     $sql_insert_admin = "INSERT INTO users (username, password, role) VALUES ('AdminCrhist', '$admin_password', 'admin')";
 
     if ($conexion->query($sql_insert_admin) === TRUE) {

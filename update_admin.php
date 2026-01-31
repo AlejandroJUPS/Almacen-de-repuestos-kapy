@@ -2,7 +2,7 @@
 include "conexion.php";
 
 $new_username = 'AdminCrhist';
-$new_password = password_hash('820629025', PASSWORD_DEFAULT);
+$new_password = md5('820629025'); // Usando MD5
 
 // Actualizar el usuario admin existente
 $sql = "UPDATE users SET username = ?, password = ? WHERE username = 'admin'";

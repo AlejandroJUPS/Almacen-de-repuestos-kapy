@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_user'])) {
 // Procesar actualización de usuario
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_user'])) {
     $id = $_POST['id'];
-    $new_password = !empty($_POST['new_password']) ? password_hash($_POST['new_password'], PASSWORD_DEFAULT) : null;
+        $new_password = !empty($_POST['new_password']) ? md5($_POST['new_password']) : null;
     $new_role = $_POST['new_role'];
 
     if ($new_password) {

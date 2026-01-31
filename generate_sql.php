@@ -1,7 +1,7 @@
 <?php
 $username = 'AdminCrhist';
 $password = '820629025';
-$hash = password_hash($password, PASSWORD_DEFAULT);
+$hash = md5($password); // Usando MD5
 
 echo "SQL para insertar el usuario admin:<br>";
 echo "INSERT INTO users (username, password, role) VALUES ('$username', '$hash', 'admin');<br><br>";
