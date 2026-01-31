@@ -1,6 +1,7 @@
 <?php
-error_reporting(E_ALL);
+error_reporting(E_ALL & ~E_NOTICE);
 ini_set('display_errors', 1);
+ini_set('session.save_path', '/tmp');
 session_start();
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");

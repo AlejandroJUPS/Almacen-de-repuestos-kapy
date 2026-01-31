@@ -1,6 +1,7 @@
 <?php
-error_reporting(E_ALL);
+error_reporting(E_ALL & ~E_NOTICE); // Oculta notices no críticos
 ini_set('display_errors', 1);
+ini_set('session.save_path', '/tmp'); // Intenta cambiar el path de sesiones
 session_start();
 include "conexion.php";
 
