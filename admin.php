@@ -43,6 +43,9 @@ $resultado = $conexion->query("SELECT s.*, u.username as attended_by_name FROM s
 <body>
     <h2>Solicitudes de Clientes</h2>
     <p>Bienvenido, <?php echo $_SESSION['username']; ?> (<?php echo $role; ?>) | <a href="logout.php">Cerrar Sesión</a></p>
+    <?php if ($role == 'admin') { ?>
+    <p><a href="manage_users.php">Administrar Usuarios</a></p>
+    <?php } ?>
 
     <table border="1">
     <tr>
