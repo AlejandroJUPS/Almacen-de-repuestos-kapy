@@ -34,8 +34,8 @@ Si prefieres hacerlo manualmente en phpMyAdmin:
 Después, accede a `login.php`.
 
 ## Usuario Admin Inicial
-- Usuario: admin
-- Contraseña: admin123
+- Usuario: AdminCrhist
+- Contraseña: 820629025
 - Cambia la contraseña después del primer login.
 
 ## Acceso

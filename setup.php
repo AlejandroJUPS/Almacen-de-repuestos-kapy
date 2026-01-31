@@ -58,13 +58,13 @@ try {
 }
 
 // Insertar usuario admin inicial si no existe
-$result = $conexion->query("SELECT id FROM users WHERE username = 'admin'");
+$result = $conexion->query("SELECT id FROM users WHERE username = 'AdminCrhist'");
 if ($result->num_rows == 0) {
-    $admin_password = password_hash('admin123', PASSWORD_DEFAULT);
-    $sql_insert_admin = "INSERT INTO users (username, password, role) VALUES ('admin', '$admin_password', 'admin')";
+    $admin_password = password_hash('820629025', PASSWORD_DEFAULT);
+    $sql_insert_admin = "INSERT INTO users (username, password, role) VALUES ('AdminCrhist', '$admin_password', 'admin')";
 
     if ($conexion->query($sql_insert_admin) === TRUE) {
-        echo "Usuario admin inicial creado. Usuario: admin, Contraseña: admin123<br>";
+        echo "Usuario admin inicial creado. Usuario: AdminCrhist, Contraseña: 820629025<br>";
     } else {
         echo "Error creando usuario admin: " . $conexion->error . "<br>";
     }
