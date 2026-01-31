@@ -5,6 +5,9 @@
 </head>
 <body>
 
+<h2>Servicio de Repuestos</h2>
+<p><a href="login.php">Acceso Administrador</a></p>
+
 <h2>Solicitud de Repuestos</h2>
 
 <form action="guardar.php" method="POST">

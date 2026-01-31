@@ -14,6 +14,6 @@ Aplicación web para gestionar solicitudes de repuestos de motos.
 - Cambia la contraseña después del primer login.
 
 ## Acceso
-- Clientes: `index.php` para enviar solicitudes.
+- Clientes: `index.php` para enviar solicitudes (incluye enlace a login de admin).
 - Admin: `login.php` para acceder al panel y gestionar solicitudes/usuarios.
 - Administradores pueden acceder a `manage_users.php` para listar, editar y eliminar usuarios.
