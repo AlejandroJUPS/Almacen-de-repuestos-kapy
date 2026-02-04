@@ -1,33 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Servicio de Repuestos de Motos</title>
-</head>
-<body>
+<?php session_start(); ?>
+<h1>Sistema de Repuestos de Motos</h1>
+<a href='auth/login.php'>Login</a> |
+<a href='auth/register.php'>Registro</a> |
+<a href='pedidos/formulario.php'>Solicitar repuesto</a> |
+<a href='inventario/catalogo.php'>Comprar repuestos</a>
 
-<h2>Servicio de Repuestos</h2>
-<p><a href="login.php">Acceso Administrador</a></p>
-
-<h2>Solicitud de Repuestos</h2>
-
-<form action="guardar.php" method="POST">
-    Nombre:<br>
-    <input type="text" name="nombre" required><br><br>
-
-    Teléfono:<br>
-    <input type="text" name="telefono" required><br><br>
-
-    Modelo de moto:<br>
-    <input type="text" name="moto" required><br><br>
-
-    Repuesto solicitado:<br>
-    <input type="text" name="repuesto" required><br><br>
-
-    Mensaje adicional:<br>
-    <textarea name="mensaje"></textarea><br><br>
-
-    <button type="submit">Enviar solicitud</button>
-</form>
-
-</body>
-</html>
+<a href='admin/admin_login.php' style='position:fixed;bottom:10px;right:10px;'>Admin</a>
