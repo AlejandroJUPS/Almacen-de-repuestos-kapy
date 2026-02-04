@@ -11,8 +11,14 @@ header("Location: ../index.php");
 }
 }
 ?>
+<link rel="stylesheet" href="/assets/css/dark.css">
+<div class="container">
+<h2>Iniciar sesión</h2>
 <form method='POST'>
-<input name='email'>
-<input type='password' name='password'>
+<label class="muted">Email</label>
+<input name='email' placeholder='tu@email.com'>
+<label class="muted">Contraseña</label>
+<input type='password' name='password' placeholder='••••••'>
 <button>Entrar</button>
 </form>
+</div>
