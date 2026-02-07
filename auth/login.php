@@ -17,7 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (hash_equals($fixedEmail, $email) && hash_equals($fixedPass, $pass)) {
             session_regenerate_id(true);
             $_SESSION['user'] = $fixedEmail;
-            header("Location: ../index.php");
+            $_SESSION['admin'] = true;
+            header("Location: ../admin/dashboard.php");
             exit();
         }
 
