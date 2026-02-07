@@ -590,6 +590,79 @@ $catalogo = [
                 width: 100%;
             }
         }
+
+        .product-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            padding: 20px;
+        }
+
+        .product-modal.open {
+            display: flex;
+        }
+
+        .product-modal-content {
+            background: #1f2a33;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 720px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .product-modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .product-modal-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 24px;
+        }
+
+        .product-modal-image {
+            width: 100%;
+            height: 320px;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .product-modal-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .product-modal-info p {
+            color: #bdc3c7;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .product-modal-body {
+                grid-template-columns: 1fr;
+            }
+
+            .product-modal-image {
+                height: 260px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -643,6 +716,20 @@ $catalogo = [
         <span id="notificationText">Producto agregado al carrito</span>
     </div>
 
+    <div class="product-modal" id="productModal" aria-hidden="true">
+        <div class="product-modal-content">
+            <button class="product-modal-close" id="productModalClose"><i class="fas fa-times"></i></button>
+            <div class="product-modal-body">
+                <img class="product-modal-image" id="productModalImage" alt="Imagen del producto">
+                <div class="product-modal-info">
+                    <h3 id="productModalTitle"></h3>
+                    <p id="productModalCode"></p>
+                    <p id="productModalPrice"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const catalogo = <?php echo json_encode($catalogo); ?>;
         let currentCategory = 'all';
@@ -651,6 +738,8 @@ $catalogo = [
 
         const CART_KEY = 'repuestos_cart';
         let cart = {};
+        const COP_RATE = 4200;
+        const IMAGE_BASE = '/assets/images/productos/';
 
         const productMap = (() => {
             const map = {};
@@ -753,10 +842,12 @@ $catalogo = [
         }
 
         function formatPrice(price) {
+            const converted = Math.round(price * COP_RATE);
             return new Intl.NumberFormat('es-ES', {
                 style: 'currency',
-                currency: 'USD'
-            }).format(price);
+                currency: 'COP',
+                maximumFractionDigits: 0
+            }).format(converted);
         }
 
         function showNotification(message) {
@@ -944,7 +1035,31 @@ $catalogo = [
         }
 
         function viewItem(code) {
-            showNotification(`Viendo detalles del producto ${code}`);
+            const item = productMap[code];
+            if (!item) return;
+
+            const modal = document.getElementById('productModal');
+            const img = document.getElementById('productModalImage');
+            const title = document.getElementById('productModalTitle');
+            const codeEl = document.getElementById('productModalCode');
+            const priceEl = document.getElementById('productModalPrice');
+
+            const placeholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+                '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"640\" height=\"480\" viewBox=\"0 0 640 480\">' +
+                '<rect width=\"100%\" height=\"100%\" fill=\"#1f2a33\"/>' +
+                '<text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"#bdc3c7\" font-size=\"20\" font-family=\"Arial\">Sin imagen</text>' +
+                '</svg>'
+            );
+
+            img.onerror = () => { img.src = placeholder; };
+            img.src = `${IMAGE_BASE}${code}.jpg`;
+
+            title.textContent = item.nombre;
+            codeEl.textContent = `Codigo: ${item.codigo}`;
+            priceEl.textContent = `Precio: ${formatPrice(item.precio)}`;
+
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
         }
 
         function initEvents() {
@@ -974,6 +1089,21 @@ $catalogo = [
                 saveCart();
                 updateCartUI();
             });
+
+            document.getElementById('productModalClose').addEventListener('click', closeProductModal);
+            document.getElementById('productModal').addEventListener('click', (e) => {
+                if (e.target.id === 'productModal') closeProductModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeProductModal();
+            });
+        }
+
+        function closeProductModal() {
+            const modal = document.getElementById('productModal');
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
         }
 
         function initApp() {
