@@ -7,5 +7,4 @@
 <a href='pedidos/formulario.php'>Solicitar repuesto</a> |
 <a href='inventario/catalogo.php'>Comprar repuestos</a>
 
-<a href='admin/admin_login.php' style='position:fixed;bottom:10px;right:10px;'>Admin</a>
 </div>
