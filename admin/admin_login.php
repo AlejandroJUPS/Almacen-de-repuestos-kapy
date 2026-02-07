@@ -1,13 +1,29 @@
 <?php
 session_start();
 $error = '';
+$usesDefaultPassword = false;
+
+$adminPassword = getenv('ADMIN_PASSWORD');
+$adminPasswordHash = getenv('ADMIN_PASSWORD_HASH');
+
+if ((empty($adminPassword)) && (empty($adminPasswordHash))) {
+    $adminPassword = "admin123";
+    $usesDefaultPassword = true;
+}
 
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
     $password = $_POST['password'];
-    
-    // Verificar credenciales (puedes cambiar "admin123" por cualquier otra contrase√±a)
-    if ($password === "admin123") {
+    $valid = false;
+
+    if (!empty($adminPasswordHash)) {
+        $valid = hash_equals($adminPasswordHash, hash('sha256', $password));
+    } else {
+        $valid = hash_equals($adminPassword, $password);
+    }
+
+    if ($valid) {
+        session_regenerate_id(true);
         $_SESSION['admin'] = true;
         $_SESSION['login_time'] = time();
         
@@ -15,13 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
         header("Location: dashboard.php");
         exit();
     } else {
-        $error = "Contrase√±a incorrecta. Int√©ntalo de nuevo.";
+        $error = "ContraseÒa incorrecta. IntÈntalo de nuevo.";
     }
 }
 
-// Verificar si ya est√° autenticado
+// Verificar si ya est· autenticado
 if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
-    // Si ya est√° autenticado, redirigir al dashboard
+    // Si ya est· autenticado, redirigir al dashboard
     if (basename($_SERVER['PHP_SELF']) !== 'dashboard.php') {
         header("Location: dashboard.php");
         exit();
@@ -346,10 +362,12 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
             </button>
         </form>
         
+        <?php if ($usesDefaultPassword): ?>
         <div class="info-box">
             <i class="fas fa-info-circle"></i>
-            <span>Para prop√≥sitos de demostraci√≥n, usa la contrase√±a: <strong>admin123</strong></span>
+            <span>Est·s usando la contraseÒa por defecto: <strong>admin123</strong>. C·mbiala con <code>ADMIN_PASSWORD</code> o <code>ADMIN_PASSWORD_HASH</code>.</span>
         </div>
+        <?php endif; ?>
         
         <div class="footer">
             <p>Sistema seguro &copy; <?php echo date('Y'); ?></p>
@@ -440,3 +458,4 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
     </script>
 </body>
 </html>
+

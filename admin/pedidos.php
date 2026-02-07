@@ -1,36 +1,62 @@
 <?php
 include("../config/db.php");
-session_start();
-if(!isset($_SESSION['admin'])) die("No autorizado");
 
-// Obtener pedidos con opciÃ³n de filtrado
-$filtro_estado = isset($_GET['estado']) ? $_GET['estado'] : 'todos';
-$sql = "SELECT * FROM pedidos ORDER BY fecha DESC";
-
-if($filtro_estado != 'todos') {
-    $sql = "SELECT * FROM pedidos WHERE estado = '$filtro_estado' ORDER BY fecha DESC";
+if (!isset($_SESSION['admin'])) {
+    die("No autorizado");
 }
 
-$r = $conn->query($sql);
+$allowedEstados = ['pendiente', 'procesando', 'completado'];
 
-// Obtener estadÃ­sticas para el dashboard
+// Obtener pedidos con opción de filtrado
+$filtro_estado = $_GET['estado'] ?? 'todos';
+if ($filtro_estado !== 'todos' && !in_array($filtro_estado, $allowedEstados, true)) {
+    $filtro_estado = 'todos';
+}
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
+// Procesar actualización de estado si se envió el formulario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_estado'])) {
+    $id_pedido = (int)($_POST['id_pedido'] ?? 0);
+    $nuevo_estado = $_POST['nuevo_estado'] ?? '';
+    $token = $_POST['csrf_token'] ?? '';
+
+    if (!hash_equals($csrf_token, $token)) {
+        die("Token inválido");
+    }
+
+    if ($id_pedido > 0 && in_array($nuevo_estado, $allowedEstados, true)) {
+        $stmt = $conn->prepare("UPDATE pedidos SET estado = ? WHERE id = ?");
+        $stmt->bind_param("si", $nuevo_estado, $id_pedido);
+        $stmt->execute();
+        $stmt->close();
+    }
+    
+    // Redirigir para evitar reenvío del formulario
+    header("Location: " . $_SERVER['PHP_SELF'] . "?estado=" . urlencode($filtro_estado));
+    exit();
+}
+
+if ($filtro_estado === 'todos') {
+    $r = $conn->query("SELECT * FROM pedidos ORDER BY fecha DESC");
+} else {
+    $stmt = $conn->prepare("SELECT * FROM pedidos WHERE estado = ? ORDER BY fecha DESC");
+    $stmt->bind_param("s", $filtro_estado);
+    $stmt->execute();
+    $r = $stmt->get_result();
+    $stmt->close();
+}
+
+// Obtener estadísticas para el dashboard
 $stats = $conn->query("SELECT 
     COUNT(*) as total,
     SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
     SUM(CASE WHEN estado = 'procesando' THEN 1 ELSE 0 END) as procesando,
     SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completados
     FROM pedidos")->fetch_assoc();
-
-// Procesar actualizaciÃ³n de estado si se enviÃ³ el formulario
-if(isset($_POST['actualizar_estado'])) {
-    $id_pedido = intval($_POST['id_pedido']);
-    $nuevo_estado = $conn->real_escape_string($_POST['nuevo_estado']);
-    $conn->query("UPDATE pedidos SET estado = '$nuevo_estado' WHERE id = $id_pedido");
-    
-    // Redirigir para evitar reenvÃ­o del formulario
-    header("Location: " . $_SERVER['PHP_SELF'] . "?estado=$filtro_estado");
-    exit();
-}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -481,6 +507,7 @@ if(isset($_POST['actualizar_estado'])) {
                         </div>
                         
                         <form method="POST" class="estado-form">
+    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             <input type="hidden" name="id_pedido" value="<?php echo $p['id']; ?>">
                             <select name="nuevo_estado" class="estado-select" onchange="this.form.submit()">
                                 <option value="pendiente" <?php echo $estado == 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
@@ -555,3 +582,4 @@ if(isset($_POST['actualizar_estado'])) {
     </script>
 </body>
 </html>
+
