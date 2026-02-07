@@ -11,16 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($email === '' || $pass === '') {
         $error = "Completa email y contraseña.";
     } else {
-        $stmt = $conn->prepare("SELECT id, nombre, password FROM usuarios WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $u = $result ? $result->fetch_assoc() : null;
-        $stmt->close();
+        $fixedEmail = "ss@gmail.com";
+        $fixedPass = "3210";
 
-        if ($u && password_verify($pass, $u['password'])) {
+        if (hash_equals($fixedEmail, $email) && hash_equals($fixedPass, $pass)) {
             session_regenerate_id(true);
-            $_SESSION['user'] = $u['nombre'];
+            $_SESSION['user'] = $fixedEmail;
             header("Location: ../index.php");
             exit();
         }
