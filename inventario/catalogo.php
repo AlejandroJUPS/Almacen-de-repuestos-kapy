@@ -1,35 +1,29 @@
-<?php
-session_start();
-if (!isset($_SESSION['user'])) {
-    header("Location: /auth/login.php");
-    exit;
-}
-
+﻿<?php
 $catalogo = [
-    "Transmision" => [
-        ["codigo" => "P001137", "nombre" => "Ajustador Cadena Traccion Gen 125", "precio" => 24.50, "stock" => 15],
+    "Transmisión" => [
+        ["codigo" => "P001137", "nombre" => "Ajustador Cadena Tracción Gen 125", "precio" => 24.50, "stock" => 15],
         ["codigo" => "P001133", "nombre" => "Ajustador de Cadena CG-125", "precio" => 18.75, "stock" => 22],
-        ["codigo" => "P001100", "nombre" => "Cadena Traccion 428H-136L", "precio" => 32.90, "stock" => 8],
-        ["codigo" => "P001104", "nombre" => "Cadena Traccion 520H-120L", "precio" => 45.25, "stock" => 12],
+        ["codigo" => "P001100", "nombre" => "Cadena Tracción 428H-136L", "precio" => 32.90, "stock" => 8],
+        ["codigo" => "P001104", "nombre" => "Cadena Tracción 520H-120L", "precio" => 45.25, "stock" => 12],
         ["codigo" => "P020043", "nombre" => "Rear Sprocket AKT 150 520-39T", "precio" => 28.40, "stock" => 5]
     ],
 
-    "Suspension" => [
+    "Suspensión" => [
         ["codigo" => "P002696", "nombre" => "Amortiguador Trasero Boxer BM100", "precio" => 42.80, "stock" => 7],
         ["codigo" => "P002723", "nombre" => "Amortiguador Trasero Negro XL-125R", "precio" => 38.90, "stock" => 14],
         ["codigo" => "P002764", "nombre" => "Amortiguador Trasero YBR125 (Set)", "precio" => 67.50, "stock" => 3],
-        ["codigo" => "P007343", "nombre" => "Barra de Suspension CG / Serpento", "precio" => 22.30, "stock" => 19]
+        ["codigo" => "P007343", "nombre" => "Barra de Suspensión CG / Serpento", "precio" => 22.30, "stock" => 19]
     ],
 
     "Motor" => [
         ["codigo" => "P003597", "nombre" => "Anillos CG-125 STD 56.5MM", "precio" => 12.40, "stock" => 25],
-        ["codigo" => "P005248", "nombre" => "Arbol de Leva CG-125", "precio" => 84.60, "stock" => 6],
+        ["codigo" => "P005248", "nombre" => "Árbol de Leva CG-125", "precio" => 84.60, "stock" => 6],
         ["codigo" => "P011016", "nombre" => "Carburador Pulsar 180", "precio" => 112.80, "stock" => 4],
         ["codigo" => "S000598", "nombre" => "Cilindro Completo CY-200", "precio" => 156.90, "stock" => 2]
     ],
 
-    "Electrico" => [
-        ["codigo" => "P001648", "nombre" => "Bateria YTX5L", "precio" => 68.50, "stock" => 9],
+    "Eléctrico" => [
+        ["codigo" => "P001648", "nombre" => "Batería YTX5L", "precio" => 68.50, "stock" => 9],
         ["codigo" => "P005510", "nombre" => "Bobina Inferior GXT 200", "precio" => 34.20, "stock" => 11],
         ["codigo" => "P001589", "nombre" => "CDI CG 200", "precio" => 41.80, "stock" => 13],
         ["codigo" => "P010720", "nombre" => "Motor de Arranque XR 150L", "precio" => 97.30, "stock" => 5]
@@ -54,7 +48,7 @@ $catalogo = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalogo de Repuestos Interactivo</title>
+    <title>Catálogo de Repuestos Interactivo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -443,245 +437,19 @@ $catalogo = [
             transform: translateY(0);
             opacity: 1;
         }
-
-        .cart-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(90deg, var(--secondary), #c0392b);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 12px 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-        }
-
-        .cart-button:hover {
-            transform: translateY(-3px);
-        }
-
-        .cart-count {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-
-        .cart-panel {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 380px;
-            height: 100vh;
-            background: rgba(26, 37, 48, 0.98);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: -8px 0 20px rgba(0, 0, 0, 0.3);
-            transform: translateX(100%);
-            transition: var(--transition);
-            z-index: 1001;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .cart-panel.open {
-            transform: translateX(0);
-        }
-
-        .cart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .cart-header h2 {
-            font-size: 1.3rem;
-        }
-
-        .cart-close {
-            background: transparent;
-            border: none;
-            color: var(--light);
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-
-        .cart-items {
-            padding: 20px;
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .cart-item {
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: var(--border-radius);
-            padding: 12px;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .cart-item-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .cart-item-meta {
-            color: #bdc3c7;
-            font-size: 0.9rem;
-        }
-
-        .cart-item-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .qty-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--light);
-            padding: 4px 8px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .remove-btn {
-            background: rgba(231, 76, 60, 0.2);
-            border: none;
-            color: #e74c3c;
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .cart-footer {
-            padding: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .cart-total {
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .cart-clear {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--light);
-            padding: 10px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-            .cart-panel {
-                width: 100%;
-            }
-        }
-
-        .product-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1100;
-            padding: 20px;
-        }
-
-        .product-modal.open {
-            display: flex;
-        }
-
-        .product-modal-content {
-            background: #1f2a33;
-            border-radius: 14px;
-            width: 100%;
-            max-width: 720px;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-            position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .product-modal-close {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: transparent;
-            border: none;
-            color: var(--light);
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-
-        .product-modal-body {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 24px;
-        }
-
-        .product-modal-image {
-            width: 100%;
-            height: 320px;
-            object-fit: contain;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .product-modal-info h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-
-        .product-modal-info p {
-            color: #bdc3c7;
-            margin-bottom: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .product-modal-body {
-                grid-template-columns: 1fr;
-            }
-
-            .product-modal-image {
-                height: 260px;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-motorcycle"></i> Catalogo de Repuestos</h1>
-            <p>Encuentra los repuestos para tu moto con navegacion intuitiva y diseno moderno</p>
+            <h1><i class="fas fa-motorcycle"></i> Catálogo de Repuestos</h1>
+            <p>Encuentra los repuestos para tu moto con navegación intuitiva y diseño moderno</p>
         </div>
 
         <div class="controls">
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Buscar por nombre o codigo...">
+                <input type="text" id="searchInput" placeholder="Buscar por nombre o código...">
             </div>
 
             <div class="filter-buttons">
@@ -697,80 +465,31 @@ $catalogo = [
         <div class="catalog-content" id="catalogContent"></div>
     </div>
 
-    <button class="cart-button" id="cartButton">
-        <i class="fas fa-shopping-cart"></i>
-        Carrito <span class="cart-count" id="cartCount">0</span>
-    </button>
-
-    <aside class="cart-panel" id="cartPanel">
-        <div class="cart-header">
-            <h2><i class="fas fa-shopping-basket"></i> Tu carrito</h2>
-            <button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="cart-items" id="cartItems"></div>
-        <div class="cart-footer">
-            <div class="cart-total">
-                <span>Total</span>
-                <span id="cartTotal">$0.00</span>
-            </div>
-            <button class="cart-clear" id="cartClear">Vaciar carrito</button>
-        </div>
-    </aside>
-
     <div class="cart-notification" id="cartNotification">
         <i class="fas fa-check-circle"></i>
         <span id="notificationText">Producto agregado al carrito</span>
     </div>
 
-    <div class="product-modal" id="productModal" aria-hidden="true">
-        <div class="product-modal-content">
-            <button class="product-modal-close" id="productModalClose"><i class="fas fa-times"></i></button>
-            <div class="product-modal-body">
-                <img class="product-modal-image" id="productModalImage" alt="Imagen del producto">
-                <div class="product-modal-info">
-                    <h3 id="productModalTitle"></h3>
-                    <p id="productModalCode"></p>
-                    <p id="productModalPrice"></p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const catalogo = <?php echo json_encode($catalogo); ?>;
+        const catalogo = <?php echo json_encode($catalogo, JSON_UNESCAPED_UNICODE); ?>;
         let currentCategory = 'all';
         let currentFilter = 'all';
         let searchTerm = '';
 
-        const CART_KEY = 'repuestos_cart';
-        let cart = {};
-        const COP_RATE = 4200;
-        const IMAGE_BASE = '/assets/images/productos/';
-
-        const productMap = (() => {
-            const map = {};
-            Object.keys(catalogo).forEach(category => {
-                catalogo[category].forEach(item => {
-                    map[item.codigo] = { ...item, categoria: category };
-                });
-            });
-            return map;
-        })();
-
         const categoryIcons = {
-            "Transmision": "fas fa-cogs",
-            "Suspension": "fas fa-car-bump",
-            "Motor": "fas fa-engine",
-            "Electrico": "fas fa-bolt",
+            "Transmisión": "fas fa-cogs",
+            "Suspensión": "fas fa-car-side",
+            "Motor": "fas fa-wrench",
+            "Eléctrico": "fas fa-bolt",
             "Frenos": "fas fa-stop-circle",
             "Accesorios": "fas fa-tools"
         };
 
         const categoryColors = {
-            "Transmision": "#3498db",
-            "Suspension": "#9b59b6",
+            "Transmisión": "#3498db",
+            "Suspensión": "#9b59b6",
             "Motor": "#e74c3c",
-            "Electrico": "#f1c40f",
+            "Eléctrico": "#f1c40f",
             "Frenos": "#2ecc71",
             "Accesorios": "#e67e22"
         };
@@ -789,9 +508,9 @@ $catalogo = [
             Object.keys(catalogo).forEach(category => {
                 const tab = document.createElement('div');
                 tab.className = `tab ${currentCategory === category ? 'active' : ''}`;
-                tab.innerHTML = `<i class="${categoryIcons[category]}"></i> ${category}`;
+                tab.innerHTML = `<i class="${categoryIcons[category] || 'fas fa-tag'}"></i> ${category}`;
                 tab.dataset.category = category;
-                tab.style.borderLeft = `3px solid ${categoryColors[category]}`;
+                tab.style.borderLeft = `3px solid ${categoryColors[category] || '#3498db'}`;
                 tab.addEventListener('click', () => setActiveCategory(category));
                 container.appendChild(tab);
             });
@@ -813,10 +532,10 @@ $catalogo = [
 
             if (currentCategory === 'all') {
                 Object.keys(catalogo).forEach(category => {
-                    items = items.concat(catalogo[category].map(item => ({...item, categoria: category})));
+                    items = items.concat(catalogo[category].map(item => ({ ...item, categoria: category })));
                 });
             } else {
-                items = catalogo[currentCategory].map(item => ({...item, categoria: currentCategory}));
+                items = catalogo[currentCategory].map(item => ({ ...item, categoria: currentCategory }));
             }
 
             if (searchTerm) {
@@ -827,7 +546,7 @@ $catalogo = [
                 );
             }
 
-            switch(currentFilter) {
+            switch (currentFilter) {
                 case 'stock':
                     items = items.filter(item => item.stock > 5);
                     break;
@@ -840,135 +559,29 @@ $catalogo = [
                 case 'price-high':
                     items.sort((a, b) => b.precio - a.precio);
                     break;
-                default:
-                    break;
             }
 
             return items;
         }
 
         function formatPrice(price) {
-            const converted = Math.round(price * COP_RATE);
             return new Intl.NumberFormat('es-ES', {
                 style: 'currency',
-                currency: 'COP',
-                maximumFractionDigits: 0
-            }).format(converted);
+                currency: 'USD'
+            }).format(price);
         }
 
         function showNotification(message) {
             const notification = document.getElementById('cartNotification');
             const notificationText = document.getElementById('notificationText');
-
             notificationText.textContent = message;
             notification.classList.add('show');
-
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        function loadCart() {
-            try {
-                const raw = localStorage.getItem(CART_KEY);
-                cart = raw ? JSON.parse(raw) : {};
-            } catch (e) {
-                cart = {};
-            }
-        }
-
-        function saveCart() {
-            localStorage.setItem(CART_KEY, JSON.stringify(cart));
-        }
-
-        function updateCartUI() {
-            const itemsContainer = document.getElementById('cartItems');
-            const totalEl = document.getElementById('cartTotal');
-            const countEl = document.getElementById('cartCount');
-
-            itemsContainer.innerHTML = '';
-            let total = 0;
-            let count = 0;
-
-            const codes = Object.keys(cart);
-            if (codes.length === 0) {
-                itemsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-shopping-basket"></i>
-                        <h3>Carrito vacio</h3>
-                        <p>Agrega productos desde el catalogo</p>
-                    </div>
-                `;
-            } else {
-                codes.forEach(code => {
-                    const item = cart[code];
-                    const lineTotal = item.precio * item.qty;
-                    total += lineTotal;
-                    count += item.qty;
-
-                    const row = document.createElement('div');
-                    row.className = 'cart-item';
-                    row.innerHTML = `
-                        <div>
-                            <div class="cart-item-title">${item.nombre}</div>
-                            <div class="cart-item-meta">${item.codigo} · ${formatPrice(item.precio)}</div>
-                        </div>
-                        <div class="cart-item-actions">
-                            <button class="qty-btn" onclick="changeQty('${code}', -1)">-</button>
-                            <span>${item.qty}</span>
-                            <button class="qty-btn" onclick="changeQty('${code}', 1)">+</button>
-                            <button class="remove-btn" onclick="removeFromCart('${code}')">Quitar</button>
-                        </div>
-                    `;
-                    itemsContainer.appendChild(row);
-                });
-            }
-
-            totalEl.textContent = formatPrice(total);
-            countEl.textContent = count.toString();
-        }
-
-        function addToCart(code) {
-            const item = productMap[code];
-            if (!item) return;
-
-            if (!cart[code]) {
-                cart[code] = {
-                    codigo: item.codigo,
-                    nombre: item.nombre,
-                    precio: item.precio,
-                    qty: 1
-                };
-            } else {
-                cart[code].qty += 1;
-            }
-
-            saveCart();
-            updateCartUI();
-            showNotification(`${item.nombre} agregado al carrito`);
-        }
-
-        function changeQty(code, delta) {
-            if (!cart[code]) return;
-            cart[code].qty += delta;
-            if (cart[code].qty <= 0) {
-                delete cart[code];
-            }
-            saveCart();
-            updateCartUI();
-        }
-
-        function removeFromCart(code) {
-            if (!cart[code]) return;
-            delete cart[code];
-            saveCart();
-            updateCartUI();
+            setTimeout(() => notification.classList.remove('show'), 3000);
         }
 
         function renderCatalog() {
             const container = document.getElementById('catalogContent');
             const items = filterItems();
-
             container.innerHTML = '';
 
             if (items.length === 0) {
@@ -977,7 +590,7 @@ $catalogo = [
                 emptyState.innerHTML = `
                     <i class="fas fa-search"></i>
                     <h2>No se encontraron productos</h2>
-                    <p>Intenta con otros terminos de busqueda o filtros</p>
+                    <p>Intenta con otros términos de búsqueda o filtros</p>
                 `;
                 container.appendChild(emptyState);
                 return;
@@ -992,11 +605,10 @@ $catalogo = [
                     const categoryHeader = document.createElement('div');
                     categoryHeader.className = 'category-header';
                     categoryHeader.dataset.category = category;
-                    categoryHeader.style.borderLeftColor = categoryColors[category];
-
+                    categoryHeader.style.borderLeftColor = categoryColors[category] || '#3498db';
                     categoryHeader.innerHTML = `
                         <div class="category-title">
-                            <i class="${categoryIcons[category]}"></i> ${category}
+                            <i class="${categoryIcons[category] || 'fas fa-tag'}"></i> ${category}
                         </div>
                         <div class="category-count">${categoryItems.length} productos</div>
                     `;
@@ -1029,7 +641,7 @@ $catalogo = [
                             <button class="action-btn btn-view" onclick="viewItem('${item.codigo}')">
                                 <i class="fas fa-eye"></i> Ver
                             </button>
-                            <button class="action-btn btn-cart" onclick="addToCart('${item.codigo}')">
+                            <button class="action-btn btn-cart" onclick="addToCart('${item.codigo}', '${item.nombre.replace(/'/g, "\\'")}')">
                                 <i class="fas fa-cart-plus"></i> Agregar
                             </button>
                         </div>
@@ -1041,31 +653,11 @@ $catalogo = [
         }
 
         function viewItem(code) {
-            const item = productMap[code];
-            if (!item) return;
+            showNotification(`Viendo detalles del producto ${code}`);
+        }
 
-            const modal = document.getElementById('productModal');
-            const img = document.getElementById('productModalImage');
-            const title = document.getElementById('productModalTitle');
-            const codeEl = document.getElementById('productModalCode');
-            const priceEl = document.getElementById('productModalPrice');
-
-            const placeholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-                '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"640\" height=\"480\" viewBox=\"0 0 640 480\">' +
-                '<rect width=\"100%\" height=\"100%\" fill=\"#1f2a33\"/>' +
-                '<text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"#bdc3c7\" font-size=\"20\" font-family=\"Arial\">Sin imagen</text>' +
-                '</svg>'
-            );
-
-            img.onerror = () => { img.src = placeholder; };
-            img.src = `${IMAGE_BASE}${code}.jpg`;
-
-            title.textContent = item.nombre;
-            codeEl.textContent = `Codigo: ${item.codigo}`;
-            priceEl.textContent = `Precio: ${formatPrice(item.precio)}`;
-
-            modal.classList.add('open');
-            modal.setAttribute('aria-hidden', 'false');
+        function addToCart(code, name) {
+            showNotification(`${name} agregado al carrito`);
         }
 
         function initEvents() {
@@ -1077,44 +669,13 @@ $catalogo = [
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    applyFilter(e.target.dataset.filter);
+                    e.currentTarget.classList.add('active');
+                    applyFilter(e.currentTarget.dataset.filter);
                 });
             });
-
-            document.getElementById('cartButton').addEventListener('click', () => {
-                document.getElementById('cartPanel').classList.add('open');
-            });
-
-            document.getElementById('cartClose').addEventListener('click', () => {
-                document.getElementById('cartPanel').classList.remove('open');
-            });
-
-            document.getElementById('cartClear').addEventListener('click', () => {
-                cart = {};
-                saveCart();
-                updateCartUI();
-            });
-
-            document.getElementById('productModalClose').addEventListener('click', closeProductModal);
-            document.getElementById('productModal').addEventListener('click', (e) => {
-                if (e.target.id === 'productModal') closeProductModal();
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeProductModal();
-            });
-        }
-
-        function closeProductModal() {
-            const modal = document.getElementById('productModal');
-            modal.classList.remove('open');
-            modal.setAttribute('aria-hidden', 'true');
         }
 
         function initApp() {
-            loadCart();
-            updateCartUI();
             renderCategoryTabs();
             renderCatalog();
             initEvents();
