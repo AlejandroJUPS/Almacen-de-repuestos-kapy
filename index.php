@@ -1,11 +1,16 @@
 <?php session_start(); ?>
-<link rel="stylesheet" href="/assets/css/dark.css">
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="assets/css/dark.css">
+<title>Repuestos</title></head>
+<body>
 <div class="container">
-<h1>Sistema de Repuestos de Motos</h1>
-<a href='auth/login.php'>Login</a> |
-<a href='auth/register.php'>Registro</a> |
-<a href='pedidos/formulario.php'>Solicitar repuesto</a> |
-<a href='inventario/catalogo.php'>Comprar repuestos</a>
-
-<a href='admin/admin_login.php' style='position:fixed;bottom:10px;right:10px;'>Admin</a>
-</div>
+<h1>Tienda de Repuestos</h1>
+<a href="inventario/catalogo.php">Catálogo</a> |
+<a href="pedidos/formulario.php">Pedido</a> |
+<?php if(isset($_SESSION['user'])): ?>
+<span>Hola <?= $_SESSION['user'] ?></span> <a href="auth/logout.php">Salir</a>
+<?php else: ?>
+<a href="auth/login.php">Login</a>
+<?php endif; ?>
+</div></body></html>
