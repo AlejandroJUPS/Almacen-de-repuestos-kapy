@@ -1,5 +1,9 @@
 <?php
 include("../config/db.php");
+if(!isset($_SESSION['user'])){
+header("Location: /auth/login.php");
+exit;
+}
 if($_POST){
 $conn->query("INSERT INTO pedidos(nombre,telefono,modelo_moto,repuesto,mensaje)
 VALUES('{$_POST['nombre']}','{$_POST['telefono']}','{$_POST['modelo']}','{$_POST['repuesto']}','{$_POST['mensaje']}')");
