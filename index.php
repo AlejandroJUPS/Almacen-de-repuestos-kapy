@@ -1,4 +1,4 @@
-<?php session_start(); ?>
+﻿<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,6 +13,7 @@
 
         <p>
             <a href="inventario/catalogo.php">Catalogo</a> |
+            <a href="inventario/inventario.php">Inventario</a> |
             <a href="pedidos/formulario.php">Pedido</a> |
             <a href="admin/admin_login.php">Admin</a>
         </p>
@@ -31,3 +32,4 @@
     </div>
 </body>
 </html>
+

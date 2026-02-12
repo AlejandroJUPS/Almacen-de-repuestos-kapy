@@ -522,6 +522,7 @@ $catalogo = [
         <div class="header">
             <h1><i class="fas fa-motorcycle"></i> Catálogo de Repuestos</h1>
             <p>Encuentra los repuestos para tu moto con navegación intuitiva y diseño moderno</p>
+            <p style="margin-top:10px;"><a href="inventario.php" style="color:#7fd5ff;">Ver inventario completo</a></p>
         </div>
 
         <div class="controls">
@@ -834,3 +835,4 @@ $catalogo = [
     </script>
 </body>
 </html>
+
