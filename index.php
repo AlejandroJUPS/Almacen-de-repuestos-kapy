@@ -29,6 +29,7 @@ $isLoggedIn = isset($_SESSION['user']);
             <?php endif; ?>
         </div>
 
+<<<<<<< HEAD
         <h1>Bienvenido a Kapy Repuestos</h1>
         <p class="muted">
             Gestiona y solicita repuestos para motos en un solo lugar. Nuestro servicio te permite
@@ -51,3 +52,6 @@ $isLoggedIn = isset($_SESSION['user']);
     <a href="admin/admin_login.php" style="position:fixed;bottom:10px;right:10px;">Admin</a>
 </body>
 </html>
+=======
+</div>
+>>>>>>> 4654a4b18f77afbd78eb66988bde737a1baa30ba
