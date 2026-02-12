@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $conn = new mysqli(
     "sql109.infinityfree.com",
     "if0_40984794",
@@ -6,8 +6,12 @@ $conn = new mysqli(
     "if0_40984794_repuestos_motos",
     3306
 );
+
 if ($conn->connect_error) {
-    die("Error de conexión");
+    die("Error de conexion a base de datos.");
 }
-session_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 ?>

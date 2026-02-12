@@ -437,9 +437,87 @@ $catalogo = [
             transform: translateY(0);
             opacity: 1;
         }
+
+        .cart-fab {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 16px;
+            background: linear-gradient(90deg, var(--accent), var(--secondary));
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+
+        .cart-panel {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: min(380px, calc(100vw - 40px));
+            max-height: 70vh;
+            overflow: auto;
+            background: #1f2e3e;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            z-index: 1001;
+            display: none;
+        }
+
+        .cart-panel.open {
+            display: block;
+        }
+
+        .cart-item {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .cart-item-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .cart-remove-btn {
+            background: rgba(231, 76, 60, 0.18);
+            color: #ffb3ab;
+            border: 1px solid rgba(231, 76, 60, 0.35);
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .cart-panel h3 {
+            margin-bottom: 12px;
+        }
+
+        .cart-total {
+            margin-top: 8px;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
+    <button class="cart-fab" id="cartToggleBtn">
+        <i class="fas fa-shopping-cart"></i> Carrito (<span id="cartCount">0</span>)
+    </button>
+
+    <div class="cart-panel" id="cartPanel">
+        <h3>Productos Seleccionados</h3>
+        <div id="cartItems"></div>
+        <div class="cart-total">Total: <span id="cartTotal">$0.00</span></div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-motorcycle"></i> Catálogo de Repuestos</h1>
@@ -475,6 +553,7 @@ $catalogo = [
         let currentCategory = 'all';
         let currentFilter = 'all';
         let searchTerm = '';
+        let cart = JSON.parse(localStorage.getItem('catalogo_carrito') || '[]');
 
         const categoryIcons = {
             "Transmisión": "fas fa-cogs",
@@ -579,6 +658,49 @@ $catalogo = [
             setTimeout(() => notification.classList.remove('show'), 3000);
         }
 
+        function saveCart() {
+            localStorage.setItem('catalogo_carrito', JSON.stringify(cart));
+        }
+
+        function findProductByCode(code) {
+            for (const category of Object.keys(catalogo)) {
+                const found = catalogo[category].find(item => item.codigo === code);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function renderCart() {
+            const cartItems = document.getElementById('cartItems');
+            const cartCount = document.getElementById('cartCount');
+            const cartTotal = document.getElementById('cartTotal');
+
+            cartCount.textContent = String(cart.length);
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p>No has seleccionado productos.</p>';
+                cartTotal.textContent = formatPrice(0);
+                return;
+            }
+
+            let total = 0;
+            cartItems.innerHTML = cart.map((item, index) => {
+                total += item.precio;
+                return `
+                    <div class="cart-item">
+                        <div class="cart-item-top">
+                            <strong>${item.nombre}</strong>
+                            <button class="cart-remove-btn" onclick="removeFromCart(${index})">Quitar</button>
+                        </div>
+                        <div>Código: ${item.codigo}</div>
+                        <div>Precio: ${formatPrice(item.precio)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            cartTotal.textContent = formatPrice(total);
+        }
+
         function renderCatalog() {
             const container = document.getElementById('catalogContent');
             const items = filterItems();
@@ -657,13 +779,39 @@ $catalogo = [
         }
 
         function addToCart(code, name) {
+            const product = findProductByCode(code);
+            if (!product) {
+                showNotification('No se pudo agregar el producto');
+                return;
+            }
+
+            cart.push({
+                codigo: product.codigo,
+                nombre: product.nombre,
+                precio: product.precio
+            });
+            saveCart();
+            renderCart();
             showNotification(`${name} agregado al carrito`);
+        }
+
+        function removeFromCart(index) {
+            if (index < 0 || index >= cart.length) return;
+            const name = cart[index].nombre;
+            cart.splice(index, 1);
+            saveCart();
+            renderCart();
+            showNotification(`${name} quitado del carrito`);
         }
 
         function initEvents() {
             document.getElementById('searchInput').addEventListener('input', (e) => {
                 searchTerm = e.target.value;
                 renderCatalog();
+            });
+
+            document.getElementById('cartToggleBtn').addEventListener('click', () => {
+                document.getElementById('cartPanel').classList.toggle('open');
             });
 
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -678,6 +826,7 @@ $catalogo = [
         function initApp() {
             renderCategoryTabs();
             renderCatalog();
+            renderCart();
             initEvents();
         }
 
