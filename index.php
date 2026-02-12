@@ -1,102 +1,28 @@
-﻿<?php
-// Activar visualización de errores para depuración
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
+﻿﻿<?php
 session_start();
+include("config/db.php");
 
-// Verificar si el archivo de base de datos existe y conectarlo
-$db_path = __DIR__ . '/config/db.php';
-if (!file_exists($db_path)) {
-    die("Error: No se encuentra el archivo de configuración de base de datos en: " . $db_path);
-}
-
-include($db_path);
-
-// Verificar si la conexión a la base de datos es válida
-if (!isset($conn) || !$conn) {
-    die("Error: No se pudo conectar a la base de datos. Verifica config/db.php");
-}
-
-$isLoggedIn = isset($_SESSION['user']) && !empty($_SESSION['user']);
+$isLoggedIn = isset($_SESSION['user']);
 $username = $isLoggedIn ? htmlspecialchars($_SESSION['user']) : null;
 $error = '';
-$user_id = null;
-$pedidos = [];
-
-// Obtener ID del usuario si está logueado
-if ($isLoggedIn) {
-    // Verificar si la tabla usuarios existe
-    $check_table = $conn->query("SHOW TABLES LIKE 'usuarios'");
-    if ($check_table->num_rows == 0) {
-        die("Error: La tabla 'usuarios' no existe en la base de datos");
-    }
-    
-    $stmt = $conn->prepare("SELECT id FROM usuarios WHERE nombre = ?");
-    if ($stmt) {
-        $stmt->bind_param("s", $_SESSION['user']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result && $result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_id = $user_data['id'] ?? null;
-        }
-        $stmt->close();
-    }
-    
-    // Obtener pedidos del usuario si existe la tabla pedidos
-    if ($user_id) {
-        $check_pedidos = $conn->query("SHOW TABLES LIKE 'pedidos'");
-        if ($check_pedidos && $check_pedidos->num_rows > 0) {
-            $stmt = $conn->prepare("
-                SELECT p.*, 
-                       COUNT(dp.id) as total_items,
-                       COALESCE(SUM(dp.cantidad * dp.precio_unitario), 0) as total_pedido
-                FROM pedidos p
-                LEFT JOIN detalles_pedido dp ON p.id = dp.pedido_id
-                WHERE p.usuario_id = ?
-                GROUP BY p.id
-                ORDER BY p.fecha_pedido DESC
-                LIMIT 5
-            ");
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                if ($result) {
-                    $pedidos = $result->fetch_all(MYSQLI_ASSOC);
-                }
-                $stmt->close();
-            }
-        }
-    }
-}
 
 // Procesar login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $email = $_POST['email'] ?? '';
     $pass = $_POST['password'] ?? '';
     
-    if (!empty($email) && !empty($pass)) {
-        $stmt = $conn->prepare("SELECT * FROM usuarios WHERE email = ?");
-        if ($stmt) {
-            $stmt->bind_param("s", $email);
-            $stmt->execute();
-            $r = $stmt->get_result();
-            $u = $r->fetch_assoc();
-            
-            if ($u && password_verify($pass, $u['password'])) {
-                $_SESSION['user'] = $u['nombre'];
-                header("Location: index.php");
-                exit();
-            } else {
-                $error = "Credenciales incorrectas";
-            }
-            $stmt->close();
-        }
+    $stmt = $conn->prepare("SELECT * FROM usuarios WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $r = $stmt->get_result();
+    $u = $r->fetch_assoc();
+    
+    if ($u && password_verify($pass, $u['password'])) {
+        $_SESSION['user'] = $u['nombre'];
+        header("Location: index.php");
+        exit();
     } else {
-        $error = "Por favor complete todos los campos";
+        $error = "Credenciales incorrectas";
     }
 }
 
@@ -106,48 +32,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     $email = $_POST['email'] ?? '';
     $pass = $_POST['password'] ?? '';
     
-    if (!empty($nombre) && !empty($email) && !empty($pass)) {
-        $pass_hash = password_hash($pass, PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)");
-        if ($stmt) {
-            $stmt->bind_param("sss", $nombre, $email, $pass_hash);
-            
-            if ($stmt->execute()) {
-                $_SESSION['user'] = $nombre;
-                header("Location: index.php");
-                exit();
-            } else {
-                $error = "Error al registrar. El email puede estar ya registrado.";
-            }
-            $stmt->close();
-        }
+    $pass_hash = password_hash($pass, PASSWORD_DEFAULT);
+    $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $nombre, $email, $pass_hash);
+    
+    if ($stmt->execute()) {
+        $_SESSION['user'] = $nombre;
+        header("Location: index.php");
+        exit();
     } else {
-        $error = "Por favor complete todos los campos";
+        $error = "Error al registrar. El email puede estar ya registrado.";
     }
-}
-
-// Función para obtener estado en español
-function getEstadoPedido($estado) {
-    $estados = [
-        'pendiente' => '⏳ Pendiente',
-        'procesando' => '🔄 Procesando',
-        'enviado' => '🚚 Enviado',
-        'entregado' => '✅ Entregado',
-        'cancelado' => '❌ Cancelado'
-    ];
-    return $estados[$estado] ?? $estado;
-}
-
-// Función para clase de estado
-function getEstadoClass($estado) {
-    $classes = [
-        'pendiente' => 'estado-pendiente',
-        'procesando' => 'estado-procesando',
-        'enviado' => 'estado-enviado',
-        'entregado' => 'estado-entregado',
-        'cancelado' => 'estado-cancelado'
-    ];
-    return $classes[$estado] ?? '';
 }
 ?>
 <!doctype html>
@@ -178,6 +73,7 @@ function getEstadoClass($estado) {
             padding: 24px 32px;
         }
         
+        /* Header estilo Microsoft */
         .ms-header {
             display: flex;
             justify-content: space-between;
@@ -232,6 +128,11 @@ function getEstadoClass($estado) {
             font-size: 14px;
         }
         
+        .user-greeting i {
+            color: #00a8e8;
+        }
+        
+        /* Hero estilo Microsoft */
         .ms-hero {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -256,6 +157,11 @@ function getEstadoClass($estado) {
             color: #a0a0a0;
             margin-bottom: 32px;
             max-width: 90%;
+        }
+        
+        .ms-hero-buttons {
+            display: flex;
+            gap: 16px;
         }
         
         .ms-btn {
@@ -288,6 +194,7 @@ function getEstadoClass($estado) {
             border-color: #00a8e8;
         }
         
+        /* Auth Cards */
         .auth-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -353,6 +260,7 @@ function getEstadoClass($estado) {
             font-size: 14px;
         }
         
+        /* Features */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -385,6 +293,7 @@ function getEstadoClass($estado) {
             color: #00a8e8;
         }
         
+        /* Dashboard para usuarios logueados */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -423,15 +332,17 @@ function getEstadoClass($estado) {
             flex: 1;
             border: 1px solid #3a3c3e;
             transition: all 0.2s;
-            text-decoration: none;
-            color: #fff;
-            display: block;
         }
         
         .action-card:hover {
             border-color: #00a8e8;
             background: #252729;
-            transform: translateY(-2px);
+        }
+        
+        .action-card a {
+            text-decoration: none;
+            color: #fff;
+            display: block;
         }
         
         .action-card h3 {
@@ -444,96 +355,7 @@ function getEstadoClass($estado) {
             font-size: 14px;
         }
         
-        .pedidos-section {
-            background: #141618;
-            border-radius: 24px;
-            padding: 32px;
-            border: 1px solid #2d2f31;
-            margin-top: 32px;
-        }
-        
-        .pedidos-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-        
-        .pedidos-header h3 {
-            font-size: 24px;
-            font-weight: 500;
-            color: #fff;
-        }
-        
-        .ver-todos {
-            color: #00a8e8;
-            text-decoration: none;
-            font-size: 15px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: #1e1f21;
-            transition: all 0.2s;
-        }
-        
-        .ver-todos:hover {
-            background: #2a2c2e;
-        }
-        
-        .pedidos-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .pedidos-table th {
-            text-align: left;
-            padding: 16px 8px;
-            color: #a0a0a0;
-            font-weight: 500;
-            font-size: 14px;
-            border-bottom: 1px solid #2d2f31;
-        }
-        
-        .pedidos-table td {
-            padding: 16px 8px;
-            border-bottom: 1px solid #2a2c2e;
-            color: #e9e9e9;
-        }
-        
-        .pedidos-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .pedidos-table tr:hover td {
-            background: #1a1c1e;
-        }
-        
-        .estado-pendiente { color: #ffb443; }
-        .estado-procesando { color: #00a8e8; }
-        .estado-enviado { color: #9b59b6; }
-        .estado-entregado { color: #2ecc71; }
-        .estado-cancelado { color: #e74c3c; }
-        
-        .badge {
-            background: #1e1f21;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            display: inline-block;
-        }
-        
-        .empty-pedidos {
-            text-align: center;
-            padding: 48px 24px;
-            color: #a0a0a0;
-        }
-        
-        .empty-pedidos i {
-            font-size: 48px;
-            display: block;
-            margin-bottom: 16px;
-            color: #3a3c3e;
-        }
-        
+        /* Admin link */
         .admin-link {
             position: fixed;
             bottom: 24px;
@@ -547,7 +369,6 @@ function getEstadoClass($estado) {
             font-size: 13px;
             transition: all 0.2s;
             opacity: 0.7;
-            z-index: 1000;
         }
         
         .admin-link:hover {
@@ -573,16 +394,13 @@ function getEstadoClass($estado) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
-            
-            .quick-actions {
-                flex-direction: column;
-            }
         }
     </style>
 </head>
 <body>
     <div class="ms-container">
         
+        <!-- HEADER MICROSOFT STYLE -->
         <header class="ms-header">
             <div class="ms-logo">
                 <h1>Kapy <span>Repuestos</span></h1>
@@ -597,12 +415,14 @@ function getEstadoClass($estado) {
                         <span><?= $username ?></span>
                     </div>
                     <a href="auth/logout.php">Cerrar sesión</a>
+                <?php else: ?>
+                    <!-- Sin links de login/register separados, todo está en la misma página -->
                 <?php endif; ?>
             </nav>
         </header>
         
         <?php if ($isLoggedIn): ?>
-            <!-- Dashboard para usuarios logueados -->
+            <!-- DASHBOARD PARA USUARIOS LOGUEADOS - ESTILO MICROSOFT -->
             <div class="dashboard-grid">
                 <div class="welcome-card">
                     <h2>Hola, <span><?= $username ?></span></h2>
@@ -617,111 +437,56 @@ function getEstadoClass($estado) {
                             </div>
                             <div>
                                 <h3 style="margin-bottom: 4px;">Tu tienda de repuestos</h3>
-                                <p style="color: #a0a0a0;">Accede al catálogo completo o realiza un nuevo pedido</p>
+                                <p style="color: #a0a0a0;">Accede al catálogo completo o realiza un pedido</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="quick-actions">
-                        <a href="inventario/catalogo.php" class="action-card">
-                            <h3>🔍 Catálogo</h3>
-                            <p>Explora repuestos</p>
-                        </a>
-                        <a href="pedidos/formulario.php" class="action-card">
-                            <h3>📦 Nuevo pedido</h3>
-                            <p>Solicitar repuestos</p>
-                        </a>
+                        <div class="action-card">
+                            <a href="inventario/catalogo.php">
+                                <h3>🔍 Catálogo</h3>
+                                <p>Explora repuestos</p>
+                            </a>
+                        </div>
+                        <div class="action-card">
+                            <a href="pedidos/formulario.php">
+                                <h3>📦 Pedidos</h3>
+                                <p>Solicitar repuestos</p>
+                            </a>
+                        </div>
+                        <div class="action-card">
+                            <a href="#">
+                                <h3>📋 Mis pedidos</h3>
+                                <p>Historial</p>
+                            </a>
+                        </div>
                     </div>
                 </div>
                 
                 <div style="background: #141618; border-radius: 24px; padding: 32px; border: 1px solid #2d2f31;">
-                    <h3 style="font-size: 20px; margin-bottom: 24px;">Resumen rápido</h3>
+                    <h3 style="font-size: 20px; margin-bottom: 24px;">Recomendados</h3>
                     <div style="display: flex; flex-direction: column; gap: 16px;">
-                        <div style="display: flex; gap: 12px; align-items: center; padding: 12px; background: #1e1f21; border-radius: 12px;">
-                            <span style="font-size: 24px;">📊</span>
-                            <div>
-                                <strong>Total de pedidos</strong>
-                                <p style="color: #a0a0a0; font-size: 13px;"><?= count($pedidos) ?> pedido(s) realizado(s)</p>
-                            </div>
-                        </div>
                         <div style="display: flex; gap: 12px; align-items: center; padding: 12px; background: #1e1f21; border-radius: 12px;">
                             <span style="font-size: 24px;">⚙️</span>
                             <div>
-                                <strong>Último pedido</strong>
-                                <p style="color: #a0a0a0; font-size: 13px;">
-                                    <?php if (!empty($pedidos)): ?>
-                                        <?= date('d/m/Y', strtotime($pedidos[0]['fecha_pedido'])) ?>
-                                    <?php else: ?>
-                                        Sin pedidos aún
-                                    <?php endif; ?>
-                                </p>
+                                <strong>Frenos</strong>
+                                <p style="color: #a0a0a0; font-size: 13px;">Pastillas y discos</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center; padding: 12px; background: #1e1f21; border-radius: 12px;">
+                            <span style="font-size: 24px;">🔧</span>
+                            <div>
+                                <strong>Motor</strong>
+                                <p style="color: #a0a0a0; font-size: 13px;">Repuestos originales</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Sección de pedidos -->
-            <div class="pedidos-section">
-                <div class="pedidos-header">
-                    <h3>📋 Mis pedidos recientes</h3>
-                    <?php if (!empty($pedidos)): ?>
-                        <a href="pedidos/historial.php" class="ver-todos">Ver todos →</a>
-                    <?php endif; ?>
-                </div>
-                
-                <?php if (empty($pedidos)): ?>
-                    <div class="empty-pedidos">
-                        <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                        <h4 style="color: #fff; margin-bottom: 8px;">No tienes pedidos aún</h4>
-                        <p style="color: #a0a0a0; margin-bottom: 24px;">Comienza realizando tu primer pedido en el catálogo</p>
-                        <a href="inventario/catalogo.php" class="ms-btn" style="display: inline-block;">Ir al catálogo</a>
-                    </div>
-                <?php else: ?>
-                    <table class="pedidos-table">
-                        <thead>
-                            <tr>
-                                <th>N° Pedido</th>
-                                <th>Fecha</th>
-                                <th>Artículos</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($pedidos as $pedido): ?>
-                                <tr>
-                                    <td style="font-weight: 500;">#<?= str_pad($pedido['id'], 6, '0', STR_PAD_LEFT) ?></td>
-                                    <td><?= date('d/m/Y', strtotime($pedido['fecha_pedido'])) ?></td>
-                                    <td><?= $pedido['total_items'] ?? 0 ?> artículos</td>
-                                    <td style="font-weight: 500;">$<?= number_format($pedido['total_pedido'] ?? 0, 2) ?></td>
-                                    <td>
-                                        <span class="<?= getEstadoClass($pedido['estado'] ?? 'pendiente') ?>">
-                                            <?= getEstadoPedido($pedido['estado'] ?? 'pendiente') ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="pedidos/detalle.php?id=<?= $pedido['id'] ?>" 
-                                           style="color: #00a8e8; text-decoration: none; font-size: 14px;">
-                                            Ver detalle →
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                    
-                    <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #2d2f31; text-align: right;">
-                        <span class="badge">
-                            Total de pedidos: <?= count($pedidos) ?>
-                        </span>
-                    </div>
-                <?php endif; ?>
-            </div>
-            
         <?php else: ?>
-            <!-- Hero para visitantes -->
+            <!-- HERO PARA VISITANTES - ESTILO MICROSOFT -->
             <div class="ms-hero">
                 <div class="ms-hero-content">
                     <h2>Repuestos para motos en un solo lugar</h2>
@@ -740,15 +505,15 @@ function getEstadoClass($estado) {
                 </div>
             </div>
             
-            <!-- Mensaje de error si existe -->
+            <!-- SECCIÓN DE LOGIN/REGISTRO INTEGRADA - ESTILO MICROSOFT -->
             <?php if ($error): ?>
                 <div class="error-message">
                     ⚠️ <?= htmlspecialchars($error) ?>
                 </div>
             <?php endif; ?>
             
-            <!-- Sección de login/registro -->
             <div class="auth-section">
+                <!-- TARJETA DE LOGIN -->
                 <div class="auth-card">
                     <h3>Iniciar sesión</h3>
                     <form method="POST" action="">
@@ -767,6 +532,7 @@ function getEstadoClass($estado) {
                     </p>
                 </div>
                 
+                <!-- TARJETA DE REGISTRO -->
                 <div class="auth-card">
                     <h3>Crear cuenta gratis</h3>
                     <form method="POST" action="">
@@ -790,6 +556,7 @@ function getEstadoClass($estado) {
                 </div>
             </div>
             
+            <!-- FEATURES -->
             <div class="features-grid">
                 <div class="feature-item">
                     <div class="feature-icon">⚡</div>
@@ -809,12 +576,14 @@ function getEstadoClass($estado) {
             </div>
         <?php endif; ?>
         
+        <!-- FOOTER SILENCIOSO -->
         <div style="margin-top: 64px; padding-top: 32px; border-top: 1px solid #2d2f31; color: #6c6e70; text-align: center; font-size: 13px;">
             Kapy Repuestos © 2024 - Tu tienda de confianza
         </div>
         
     </div>
     
+    <!-- ACCESO ADMIN (siempre visible) -->
     <a href="admin/admin_login.php" class="admin-link">
         ⚙️ Acceso administrador
     </a>
