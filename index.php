@@ -1,8 +1,25 @@
 ﻿<?php
-session_start();
-include("config/db.php");
+// Activar visualización de errores para depuración
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-$isLoggedIn = isset($_SESSION['user']);
+session_start();
+
+// Verificar si el archivo de base de datos existe y conectarlo
+$db_path = __DIR__ . '/config/db.php';
+if (!file_exists($db_path)) {
+    die("Error: No se encuentra el archivo de configuración de base de datos en: " . $db_path);
+}
+
+include($db_path);
+
+// Verificar si la conexión a la base de datos es válida
+if (!isset($conn) || !$conn) {
+    die("Error: No se pudo conectar a la base de datos. Verifica config/db.php");
+}
+
+$isLoggedIn = isset($_SESSION['user']) && !empty($_SESSION['user']);
 $username = $isLoggedIn ? htmlspecialchars($_SESSION['user']) : null;
 $error = '';
 $user_id = null;
@@ -10,29 +27,49 @@ $pedidos = [];
 
 // Obtener ID del usuario si está logueado
 if ($isLoggedIn) {
-    $stmt = $conn->prepare("SELECT id FROM usuarios WHERE nombre = ?");
-    $stmt->bind_param("s", $_SESSION['user']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user_data = $result->fetch_assoc();
-    $user_id = $user_data['id'] ?? null;
+    // Verificar si la tabla usuarios existe
+    $check_table = $conn->query("SHOW TABLES LIKE 'usuarios'");
+    if ($check_table->num_rows == 0) {
+        die("Error: La tabla 'usuarios' no existe en la base de datos");
+    }
     
-    // Obtener pedidos del usuario
-    if ($user_id) {
-        $stmt = $conn->prepare("
-            SELECT p.*, 
-                   COUNT(dp.id) as total_items,
-                   SUM(dp.cantidad * dp.precio_unitario) as total_pedido
-            FROM pedidos p
-            LEFT JOIN detalles_pedido dp ON p.id = dp.pedido_id
-            WHERE p.usuario_id = ?
-            GROUP BY p.id
-            ORDER BY p.fecha_pedido DESC
-            LIMIT 5
-        ");
-        $stmt->bind_param("i", $user_id);
+    $stmt = $conn->prepare("SELECT id FROM usuarios WHERE nombre = ?");
+    if ($stmt) {
+        $stmt->bind_param("s", $_SESSION['user']);
         $stmt->execute();
-        $pedidos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $result = $stmt->get_result();
+        if ($result && $result->num_rows > 0) {
+            $user_data = $result->fetch_assoc();
+            $user_id = $user_data['id'] ?? null;
+        }
+        $stmt->close();
+    }
+    
+    // Obtener pedidos del usuario si existe la tabla pedidos
+    if ($user_id) {
+        $check_pedidos = $conn->query("SHOW TABLES LIKE 'pedidos'");
+        if ($check_pedidos && $check_pedidos->num_rows > 0) {
+            $stmt = $conn->prepare("
+                SELECT p.*, 
+                       COUNT(dp.id) as total_items,
+                       COALESCE(SUM(dp.cantidad * dp.precio_unitario), 0) as total_pedido
+                FROM pedidos p
+                LEFT JOIN detalles_pedido dp ON p.id = dp.pedido_id
+                WHERE p.usuario_id = ?
+                GROUP BY p.id
+                ORDER BY p.fecha_pedido DESC
+                LIMIT 5
+            ");
+            if ($stmt) {
+                $stmt->bind_param("i", $user_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($result) {
+                    $pedidos = $result->fetch_all(MYSQLI_ASSOC);
+                }
+                $stmt->close();
+            }
+        }
     }
 }
 
@@ -41,18 +78,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $email = $_POST['email'] ?? '';
     $pass = $_POST['password'] ?? '';
     
-    $stmt = $conn->prepare("SELECT * FROM usuarios WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $r = $stmt->get_result();
-    $u = $r->fetch_assoc();
-    
-    if ($u && password_verify($pass, $u['password'])) {
-        $_SESSION['user'] = $u['nombre'];
-        header("Location: index.php");
-        exit();
+    if (!empty($email) && !empty($pass)) {
+        $stmt = $conn->prepare("SELECT * FROM usuarios WHERE email = ?");
+        if ($stmt) {
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $r = $stmt->get_result();
+            $u = $r->fetch_assoc();
+            
+            if ($u && password_verify($pass, $u['password'])) {
+                $_SESSION['user'] = $u['nombre'];
+                header("Location: index.php");
+                exit();
+            } else {
+                $error = "Credenciales incorrectas";
+            }
+            $stmt->close();
+        }
     } else {
-        $error = "Credenciales incorrectas";
+        $error = "Por favor complete todos los campos";
     }
 }
 
@@ -62,16 +106,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     $email = $_POST['email'] ?? '';
     $pass = $_POST['password'] ?? '';
     
-    $pass_hash = password_hash($pass, PASSWORD_DEFAULT);
-    $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $nombre, $email, $pass_hash);
-    
-    if ($stmt->execute()) {
-        $_SESSION['user'] = $nombre;
-        header("Location: index.php");
-        exit();
+    if (!empty($nombre) && !empty($email) && !empty($pass)) {
+        $pass_hash = password_hash($pass, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)");
+        if ($stmt) {
+            $stmt->bind_param("sss", $nombre, $email, $pass_hash);
+            
+            if ($stmt->execute()) {
+                $_SESSION['user'] = $nombre;
+                header("Location: index.php");
+                exit();
+            } else {
+                $error = "Error al registrar. El email puede estar ya registrado.";
+            }
+            $stmt->close();
+        }
     } else {
-        $error = "Error al registrar. El email puede estar ya registrado.";
+        $error = "Por favor complete todos los campos";
     }
 }
 
@@ -127,7 +178,6 @@ function getEstadoClass($estado) {
             padding: 24px 32px;
         }
         
-        /* Header estilo Microsoft */
         .ms-header {
             display: flex;
             justify-content: space-between;
@@ -182,11 +232,6 @@ function getEstadoClass($estado) {
             font-size: 14px;
         }
         
-        .user-greeting i {
-            color: #00a8e8;
-        }
-        
-        /* Hero estilo Microsoft */
         .ms-hero {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -211,11 +256,6 @@ function getEstadoClass($estado) {
             color: #a0a0a0;
             margin-bottom: 32px;
             max-width: 90%;
-        }
-        
-        .ms-hero-buttons {
-            display: flex;
-            gap: 16px;
         }
         
         .ms-btn {
@@ -248,7 +288,6 @@ function getEstadoClass($estado) {
             border-color: #00a8e8;
         }
         
-        /* Auth Cards */
         .auth-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -314,7 +353,6 @@ function getEstadoClass($estado) {
             font-size: 14px;
         }
         
-        /* Features */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -347,7 +385,6 @@ function getEstadoClass($estado) {
             color: #00a8e8;
         }
         
-        /* Dashboard para usuarios logueados */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -407,7 +444,6 @@ function getEstadoClass($estado) {
             font-size: 14px;
         }
         
-        /* Tabla de pedidos - Estilo Microsoft */
         .pedidos-section {
             background: #141618;
             border-radius: 24px;
@@ -498,7 +534,6 @@ function getEstadoClass($estado) {
             color: #3a3c3e;
         }
         
-        /* Admin link */
         .admin-link {
             position: fixed;
             bottom: 24px;
@@ -548,7 +583,6 @@ function getEstadoClass($estado) {
 <body>
     <div class="ms-container">
         
-        <!-- HEADER MICROSOFT STYLE -->
         <header class="ms-header">
             <div class="ms-logo">
                 <h1>Kapy <span>Repuestos</span></h1>
@@ -568,7 +602,7 @@ function getEstadoClass($estado) {
         </header>
         
         <?php if ($isLoggedIn): ?>
-            <!-- DASHBOARD PARA USUARIOS LOGUEADOS CON PEDIDOS REALES -->
+            <!-- Dashboard para usuarios logueados -->
             <div class="dashboard-grid">
                 <div class="welcome-card">
                     <h2>Hola, <span><?= $username ?></span></h2>
@@ -627,7 +661,7 @@ function getEstadoClass($estado) {
                 </div>
             </div>
             
-            <!-- SECCIÓN DE PEDIDOS - FUNCIONALIDAD REAL -->
+            <!-- Sección de pedidos -->
             <div class="pedidos-section">
                 <div class="pedidos-header">
                     <h3>📋 Mis pedidos recientes</h3>
@@ -638,7 +672,7 @@ function getEstadoClass($estado) {
                 
                 <?php if (empty($pedidos)): ?>
                     <div class="empty-pedidos">
-                        <i>📦</i>
+                        <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
                         <h4 style="color: #fff; margin-bottom: 8px;">No tienes pedidos aún</h4>
                         <p style="color: #a0a0a0; margin-bottom: 24px;">Comienza realizando tu primer pedido en el catálogo</p>
                         <a href="inventario/catalogo.php" class="ms-btn" style="display: inline-block;">Ir al catálogo</a>
@@ -663,8 +697,8 @@ function getEstadoClass($estado) {
                                     <td><?= $pedido['total_items'] ?? 0 ?> artículos</td>
                                     <td style="font-weight: 500;">$<?= number_format($pedido['total_pedido'] ?? 0, 2) ?></td>
                                     <td>
-                                        <span class="<?= getEstadoClass($pedido['estado']) ?>">
-                                            <?= getEstadoPedido($pedido['estado']) ?>
+                                        <span class="<?= getEstadoClass($pedido['estado'] ?? 'pendiente') ?>">
+                                            <?= getEstadoPedido($pedido['estado'] ?? 'pendiente') ?>
                                         </span>
                                     </td>
                                     <td>
@@ -687,7 +721,7 @@ function getEstadoClass($estado) {
             </div>
             
         <?php else: ?>
-            <!-- HERO PARA VISITANTES - ESTILO MICROSOFT -->
+            <!-- Hero para visitantes -->
             <div class="ms-hero">
                 <div class="ms-hero-content">
                     <h2>Repuestos para motos en un solo lugar</h2>
@@ -706,15 +740,15 @@ function getEstadoClass($estado) {
                 </div>
             </div>
             
-            <!-- SECCIÓN DE LOGIN/REGISTRO INTEGRADA -->
+            <!-- Mensaje de error si existe -->
             <?php if ($error): ?>
                 <div class="error-message">
                     ⚠️ <?= htmlspecialchars($error) ?>
                 </div>
             <?php endif; ?>
             
+            <!-- Sección de login/registro -->
             <div class="auth-section">
-                <!-- TARJETA DE LOGIN -->
                 <div class="auth-card">
                     <h3>Iniciar sesión</h3>
                     <form method="POST" action="">
@@ -733,7 +767,6 @@ function getEstadoClass($estado) {
                     </p>
                 </div>
                 
-                <!-- TARJETA DE REGISTRO -->
                 <div class="auth-card">
                     <h3>Crear cuenta gratis</h3>
                     <form method="POST" action="">
@@ -757,7 +790,6 @@ function getEstadoClass($estado) {
                 </div>
             </div>
             
-            <!-- FEATURES -->
             <div class="features-grid">
                 <div class="feature-item">
                     <div class="feature-icon">⚡</div>
@@ -777,14 +809,12 @@ function getEstadoClass($estado) {
             </div>
         <?php endif; ?>
         
-        <!-- FOOTER -->
         <div style="margin-top: 64px; padding-top: 32px; border-top: 1px solid #2d2f31; color: #6c6e70; text-align: center; font-size: 13px;">
             Kapy Repuestos © 2024 - Tu tienda de confianza
         </div>
         
     </div>
     
-    <!-- ACCESO ADMIN -->
     <a href="admin/admin_login.php" class="admin-link">
         ⚙️ Acceso administrador
     </a>
