@@ -1,4 +1,4 @@
-﻿﻿<?php
+﻿<?php
 session_start();
 $isLoggedIn = isset($_SESSION['user']);
 $username = $isLoggedIn ? htmlspecialchars($_SESSION['user']) : null;
@@ -20,13 +20,13 @@ $username = $isLoggedIn ? htmlspecialchars($_SESSION['user']) : null;
         <h1>Kapy Repuestos</h1>
         <nav class="nav">
 
+            <a class="btn-link" href="inventario/catalogo.php">Catálogo</a>
+
             <?php if (!$isLoggedIn): ?>
                 <a class="btn-link" href="auth/login.php">Login</a>
                 <a class="btn-link" href="auth/register.php">Registro</a>
             <?php else: ?>
                 <span class="muted">Hola, <?= $username ?></span>
-                <a class="btn-link" href="inventario/catalogo.php">Catálogo</a>
-                <a class="btn-link" href="inventario/carrito.php">Carrito</a>
                 <a class="btn-link" href="pedidos/formulario.php">Solicitar</a>
                 <a class="btn-link" href="auth/logout.php">Cerrar sesión</a>
             <?php endif; ?>
@@ -34,56 +34,47 @@ $username = $isLoggedIn ? htmlspecialchars($_SESSION['user']) : null;
         </nav>
     </header>
 
-    <!-- HERO / BIENVENIDA -->
+    <!-- HERO -->
     <section class="card stack" style="padding: 32px;">
-        <h2>Tu plataforma integral de repuestos para motos</h2>
+        <h2>Repuestos para motos en un solo lugar</h2>
         <p class="muted">
-            Gestiona tu búsqueda de repuestos, realiza solicitudes y lleva el seguimiento
-            de tus pedidos en un solo lugar con una interfaz clara y moderna.
+            Explora nuestro catálogo de repuestos y realiza solicitudes de forma
+            rápida y sencilla desde una plataforma clara y moderna.
         </p>
 
-        <?php if (!$isLoggedIn): ?>
-            <div class="row">
-                <a class="btn-link" href="auth/register.php">Crear cuenta</a>
-                <a class="btn-link" href="auth/login.php">Iniciar sesión</a>
-            </div>
-        <?php else: ?>
-            <div class="row">
-                <a class="btn-link" href="inventario/catalogo.php">Explorar catálogo</a>
-                <a class="btn-link" href="inventario/carrito.php">Ver carrito</a>
-                <a class="btn-link" href="pedidos/formulario.php">Realizar pedido</a>
-            </div>
-        <?php endif; ?>
+        <div class="row">
+            <a class="btn-link" href="inventario/catalogo.php">
+                Ver catálogo
+            </a>
+        </div>
     </section>
 
-    <!-- FUNCIONALIDADES -->
+    <!-- FUNCIONES -->
     <section class="stack">
         <h3>Funciones principales</h3>
 
         <div class="row">
 
             <div class="card stack" style="padding:20px; flex:1;">
-                <h4>Catálogo</h4>
+                <h4>Catálogo de repuestos</h4>
                 <p class="muted">
-                    Visualiza los repuestos disponibles organizados por categorías.
+                    Consulta los productos disponibles y agrégalos al carrito
+                    directamente desde el catálogo.
                 </p>
-                <a class="btn-link" href="inventario/catalogo.php">Ir al catálogo</a>
+                <a class="btn-link" href="inventario/catalogo.php">
+                    Explorar catálogo
+                </a>
             </div>
 
             <div class="card stack" style="padding:20px; flex:1;">
-                <h4>Carrito</h4>
+                <h4>Solicitud de pedidos</h4>
                 <p class="muted">
-                    Administra los productos seleccionados antes de confirmar tu pedido.
+                    Envía tu pedido después de seleccionar los productos
+                    desde el catálogo.
                 </p>
-                <a class="btn-link" href="inventario/carrito.php">Ver carrito</a>
-            </div>
-
-            <div class="card stack" style="padding:20px; flex:1;">
-                <h4>Pedidos</h4>
-                <p class="muted">
-                    Envía solicitudes de repuestos de manera rápida y organizada.
-                </p>
-                <a class="btn-link" href="pedidos/formulario.php">Solicitar ahora</a>
+                <a class="btn-link" href="pedidos/formulario.php">
+                    Hacer pedido
+                </a>
             </div>
 
         </div>
@@ -91,8 +82,8 @@ $username = $isLoggedIn ? htmlspecialchars($_SESSION['user']) : null;
 
 </div>
 
-<!-- ACCESO ADMIN DISCRETO -->
-<a href="admin/admin_login.php" 
+<!-- ACCESO ADMIN -->
+<a href="admin/admin_login.php"
    style="position:fixed; bottom:15px; right:15px; opacity:0.5;">
    Admin
 </a>
